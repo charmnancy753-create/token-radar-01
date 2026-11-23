@@ -37,12 +37,11 @@ const out = arg('output', process.env.MAKEFUN_OUTPUT_DIR ?? '/output');
 const snapshot = parseSnapshot(readFileSync(inputFile, 'utf8'));
 const { board, radar } = buildRadar(snapshot);
 
-// Optional watchlist filter: keep only protocols whose symbol is in --watchlist
 const watchlistArg = arg('watchlist', '');
 if (watchlistArg.length > 0) {
   const wanted = watchlistArg.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
   if (wanted.length > 0) {
-    const boardSet = new Set(board.map(r => r.symbol.toUpperCase()));
+    const boardSet = new Set(board.map(r => (r.symbol ?? '').toUpperCase()));
     const keep = wanted.filter(w => boardSet.has(w));
     if (keep.length > 0) {
       const kept = board.filter(r => keep.includes((r.symbol ?? '').toUpperCase()));
