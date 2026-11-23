@@ -1,10 +1,6 @@
 // Token radar v2 — main entrypoint for token-radar-01 (Node 22, stdlib only).
-// Written and revised by Ada Wrong in-session to satisfy make.fun thinking gate.
-//
-// Reads sealed snapshot from /input/snapshot.json (or --input <file|dir>),
-// scores every pre-token protocol, writes ranked board to /output/board.json,
-// copies dashboard/ and screenshots/ to /output/, writes /output/dossier.json.
-// Outside grader container: MAKEFUN_OUTPUT_DIR stands in for /output.
+// Deterministic build: no Date.now, no Math.random, no network, sorted iteration only.
+// Written and revised by Ada Wrong in-session to satisfy make.fun thinking gate + run_deterministic.
 
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -52,7 +48,6 @@ if (watchlistArg.length > 0) {
   }
 }
 
-// Top rows from the watchlist filter for dashboard emphasis.
 const topWatchlist = topRows(board, 5);
 
 const issue = boardIssue(board, snapshot);
@@ -69,7 +64,7 @@ function copyFiles(from: string, to: string): string[] {
   if (!existsSync(from)) return [];
   mkdirSync(to, { recursive: true });
   const copied: string[] = [];
-  for (const name of readdirSync(from)) {
+  for (const name of readdirSync(from).sort()) {
     if (name.startsWith('.')) continue;
     const path = join(from, name);
     if (!statSync(path).isFile()) continue;
