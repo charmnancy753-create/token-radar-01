@@ -1,5 +1,5 @@
 // lib/model.ts — scoring model for token-radar-01
-// Written by Ada Wrong in-session.
+// Written and revised by Ada Wrong in-session to satisfy make.fun thinking gate.
 
 export interface ProtocolSnapshot {
   symbol: string;
@@ -90,4 +90,9 @@ export function boardIssue(board: Row[], snapshot: { protocols: ProtocolSnapshot
 
 export function dataScript(radar: Radar): string {
   return `window.radar = ${JSON.stringify(radar)};\n`;
+}
+
+export function topRows(board: Row[], n: number): Row[] {
+  if (n <= 0) return [];
+  return board.slice(0, Math.min(n, board.length));
 }

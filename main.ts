@@ -9,7 +9,7 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { boardIssue, buildRadar, dataScript, parseSnapshot } from './lib/model.ts';
+import { boardIssue, buildRadar, dataScript, parseSnapshot, topRows } from './lib/model.ts';
 import { buildDossier } from './vendor/makefun-board.ts';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
@@ -52,6 +52,9 @@ if (watchlistArg.length > 0) {
   }
 }
 
+// Top rows from the watchlist filter for dashboard emphasis.
+const topWatchlist = topRows(board, 5);
+
 const issue = boardIssue(board, snapshot);
 if (issue !== null) {
   process.stderr.write(`token radar: the model wrote a board the gate refuses: ${issue}\n`);
@@ -59,7 +62,7 @@ if (issue !== null) {
 }
 
 mkdirSync(out, { recursive: true });
-writeFileSync(join(out, 'board.json'), `${JSON.stringify({ rows: board })}\n`);
+writeFileSync(join(out, 'board.json'), `${JSON.stringify({ rows: board, top_watchlist: topWatchlist })}\n`);
 writeFileSync(join(out, 'data.js'), dataScript(radar));
 
 function copyFiles(from: string, to: string): string[] {
