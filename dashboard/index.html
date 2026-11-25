@@ -1,18 +1,23 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Token Radar — token-radar-01</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Token Radar: pre-token protocols ranked by implied value</title>
+<meta name="description" content="A launch radar for protocols whose token does not exist yet: ranked by a confidence-weighted implied value computed from the snapshot's own figures, with a farm plan for every row.">
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
-<header><h1>Token Radar</h1><p>token-radar-01 entry — Ada Wrong</p></header>
-<main>
-<table id="board"></table>
-<div id="radar"></div>
+<a class="skip" href="#board">Skip to the board</a>
+<main id="board" tabindex="-1" aria-busy="true">
+<noscript>
+  <p style="color:#e6e8ef;font-family:system-ui,sans-serif;padding:24px">
+    Token Radar renders its board with a small script. The board's data is in
+    <code>data.js</code> beside this page, and the same rows are in <code>board.json</code>.
+  </p>
+</noscript>
 </main>
-<script src="data.js"></script>
+<script src="../data.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
