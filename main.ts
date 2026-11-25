@@ -1,11 +1,11 @@
-// Token radar v2 — main entrypoint for token-radar-01 (Node 22, stdlib only).
-// Deterministic build: no Date.now, no Math.random, no network, sorted iteration only.
-// Written and revised by Ada Wrong in-session to satisfy make.fun thinking gate + run_deterministic.
+// Token radar v3 — main entrypoint for token-radar-01 (Node 22, stdlib only).
+// Deterministic by construction: no Date.now, no new Date, no Math.random, no network, sorted iteration only.
+// The board is the model's own output, and the gate checks the board before anything is written.
 
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { boardIssue, buildRadar, dataScript, parseSnapshot, topRows } from './lib/model.ts';
+import { boardIssue, buildRadar, dataScript, parseSnapshot } from './lib/model.ts';
 import { buildDossier } from './vendor/makefun-board.ts';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
@@ -24,7 +24,9 @@ function arg(name: string, fallback: string): string {
 const inputArg = arg('input', '/input');
 const inputFile = inputArg.endsWith('.json') ? inputArg : join(inputArg, 'snapshot.json');
 if (!existsSync(inputFile)) {
-  process.stderr.write(`token radar: no snapshot at ${inputFile}: pass --input <snapshot.json|directory> or mount the sealed /input\n`);
+  process.stderr.write(
+    `token radar: no snapshot at ${inputFile}: pass --input <snapshot.json|directory> or mount the sealed /input\n`,
+  );
   process.exit(2);
 }
 
@@ -33,28 +35,14 @@ const out = arg('output', process.env.MAKEFUN_OUTPUT_DIR ?? '/output');
 const snapshot = parseSnapshot(readFileSync(inputFile, 'utf8'));
 const { board, radar } = buildRadar(snapshot);
 
-const watchlistArg = arg('watchlist', '');
-if (watchlistArg.length > 0) {
-  const wanted = watchlistArg.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
-  if (wanted.length > 0) {
-    const boardSet = new Set(board.map(r => (r.symbol ?? '').toUpperCase()));
-    const keep = wanted.filter(w => boardSet.has(w));
-    if (keep.length > 0) {
-      const kept = board.filter(r => keep.includes((r.symbol ?? '').toUpperCase()));
-      kept.sort((a, b) => keep.indexOf((a.symbol ?? '').toUpperCase()) - keep.indexOf((b.symbol ?? '').toUpperCase()));
-      board.length = 0;
-      board.push(...kept);
-    }
-  }
-}
-
-const topWatchlist = topRows(board, 5);
-
 const issue = boardIssue(board, snapshot);
 if (issue !== null) {
   process.stderr.write(`token radar: the model wrote a board the gate refuses: ${issue}\n`);
   process.exit(1);
 }
+
+// The top of the watchlist: the five rows a reader should look at first, in rank order.
+const topWatchlist = board.slice(0, 5);
 
 mkdirSync(out, { recursive: true });
 writeFileSync(join(out, 'board.json'), `${JSON.stringify({ rows: board, top_watchlist: topWatchlist })}\n`);
@@ -77,18 +65,30 @@ function copyFiles(from: string, to: string): string[] {
 copyFiles(join(here, 'dashboard'), join(out, 'dashboard'));
 const shots = copyFiles(join(here, 'screenshots'), join(out, 'screenshots'));
 if (shots.length < 3) {
-  process.stderr.write(`token radar: screenshots/ holds ${shots.length} image${shots.length === 1 ? '' : 's'}: hand in 3, the board, a detail view and a filtered view\n`);
+  process.stderr.write(
+    `token radar: screenshots/ holds ${shots.length} image${shots.length === 1 ? '' : 's'}: hand in 3, the board, a detail view and a filtered view\n`,
+  );
   process.exit(1);
 }
 for (const name of shots) {
   if (!IMAGE_NAME.test(name)) {
-    process.stderr.write(`token radar: screenshots/${name}: a name is letters, digits and . _ -, 1 to 128 characters\n`);
+    process.stderr.write(
+      `token radar: screenshots/${name}: a name is letters, digits and . _ -, 1 to 128 characters\n`,
+    );
     process.exit(1);
   }
 }
 
-writeFileSync(join(out, 'dossier.json'), buildDossier(out, { text_max_bytes: TEXT_MAX_BYTES, screenshots: SCREENSHOT_CAPS, dashboard: { max_files: 400, max_bytes: 4_194_304 } }));
+writeFileSync(
+  join(out, 'dossier.json'),
+  buildDossier(out, {
+    text_max_bytes: TEXT_MAX_BYTES,
+    screenshots: SCREENSHOT_CAPS,
+    dashboard: { max_files: 400, max_bytes: 4_194_304 },
+  }),
+);
 
 process.stdout.write(
   `token radar: ${snapshot.protocols.length} protocols, ${snapshot.watchlist.length} on the watchlist, ${board.length} rows scored (${radar.early_size} early, ${radar.live_size} live set aside)\n` +
-    `token radar: wrote ${join(out, 'board.json')}, ${join(out, 'data.js')}, ${join(out, 'dashboard')} (3 files), ${join(out, 'screenshots')} (${shots.length} images) and ${join(out, 'dossier.json')}\n`);
+    `token radar: wrote ${join(out, 'board.json')}, ${join(out, 'data.js')}, ${join(out, 'dashboard')} (3 files), ${join(out, 'screenshots')} (${shots.length} images) and ${join(out, 'dossier.json')}\n`,
+);
